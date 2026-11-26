@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>圣诞树 · 管理后台</title>
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;background:radial-gradient(120% 80% at 50% 0%,#141a15 0%,#08090a 55%,#050506 100%);
+    color:#e8e3d5;font:14px/1.6 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+    padding:0 0 96px;min-height:100vh}
+  .wrap{max-width:620px;margin:0 auto;padding:18px 16px 0}
+  h1{margin:6px 0 2px;font-size:19px;font-weight:600;letter-spacing:.08em;
+    background:linear-gradient(135deg,#fceea7,#d4af37 70%);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{font-size:11.5px;color:#7d7768;letter-spacing:.1em;margin-bottom:14px}
+  .card{background:linear-gradient(180deg,rgba(28,30,26,.9),rgba(16,17,15,.9));border:1px solid rgba(212,175,55,.18);
+    border-radius:14px;padding:14px 14px 6px;margin-bottom:13px;box-shadow:0 6px 24px rgba(0,0,0,.5)}
+  .card h2{margin:0 0 10px;font-size:13px;font-weight:600;color:#e6c977;letter-spacing:.14em;display:flex;align-items:center;gap:7px}
+  .card h2 i{width:5px;height:5px;border-radius:50%;background:#d4af37;box-shadow:0 0 8px #d4af37;font-style:normal}
+  .row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:7px 0}
+  .row label{flex:0 0 auto;font-size:12.5px;color:#b8b1a0}
+  .row .val{font-size:11.5px;color:#d4af37;font-variant-numeric:tabular-nums;min-width:46px;text-align:right}
+  input[type=text],input[type=password],select{flex:1;min-width:0;background:rgba(0,0,0,.45);border:1px solid rgba(212,175,55,.22);
+    color:#f2ecdc;border-radius:9px;padding:8px 10px;font-size:13px;font-family:inherit;outline:none}
+  input:focus,select:focus{border-color:rgba(212,175,55,.6);box-shadow:0 0 0 2px rgba(212,175,55,.12)}
+  input[type=range]{flex:1;min-width:0;-webkit-appearance:none;height:3px;border-radius:3px;background:rgba(212,175,55,.25);outline:none}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%,#fff6d0,#d4af37);border:none;box-shadow:0 0 8px rgba(212,175,55,.7)}
+  input[type=color]{flex:0 0 44px;height:30px;padding:0;border:1px solid rgba(212,175,55,.25);border-radius:8px;background:transparent}
+  .btns{display:flex;gap:9px;flex-wrap:wrap;margin:4px 0 10px}
+  button{flex:1 1 auto;min-width:104px;padding:11px 12px;border-radius:11px;font-size:13px;font-family:inherit;
+    border:1px solid rgba(212,175,55,.3);background:rgba(212,175,55,.08);color:#e8d8a8;cursor:pointer;transition:.15s}
+  button:active{transform:scale(.98)}
+  button.primary{background:linear-gradient(135deg,#fceea7,#d4af37);color:#241f0c;font-weight:600;border-color:transparent;
+    box-shadow:0 4px 16px rgba(212,175,55,.28)}
+  .bar{position:fixed;left:0;right:0;bottom:0;padding:10px 16px calc(10px + env(safe-area-inset-bottom));
+    background:linear-gradient(180deg,rgba(5,5,6,0),rgba(5,5,6,.94) 40%);backdrop-filter:blur(6px);z-index:20}
+  .bar .inner{max-width:620px;margin:0 auto;display:flex;gap:9px}
+  #toast{position:fixed;left:50%;top:18px;transform:translate(-50%,-20px);opacity:0;pointer-events:none;z-index:99;
+    padding:9px 16px;border-radius:20px;font-size:12.5px;background:rgba(20,22,18,.96);border:1px solid rgba(212,175,55,.4);
+    color:#f0e3b8;transition:.25s;max-width:82vw;text-align:center}
+  #toast.on{opacity:1;transform:translate(-50%,0)}
+  #toast.err{border-color:rgba(220,90,90,.6);color:#ffc9c9}
+  .stat{display:flex;gap:10px;text-align:center}
+  .stat div{flex:1;background:rgba(212,175,55,.06);border:1px solid rgba(212,175,55,.14);border-radius:11px;padding:9px 4px}
+  .stat b{display:block;font-size:19px;color:#fceea7;font-variant-numeric:tabular-nums;letter-spacing:.02em}
+  .stat span{font-size:10.5px;color:#8b8574;letter-spacing:.08em}
+  .tip{font-size:11px;color:#77715f;line-height:1.65;margin:2px 0 9px}
+  .tip a{color:#c8a94a}
+  details summary{cursor:pointer;font-size:12px;color:#9d9580;letter-spacing:.06em;outline:none}
+  .muted{color:#6b6558}
+  .badge{display:inline-block;font-size:10px;padding:1px 7px;border-radius:20px;margin-left:6px;vertical-align:1px}
+  .badge.ok{background:rgba(90,200,120,.15);color:#7fe0a0;border:1px solid rgba(90,200,120,.3)}
+  .badge.no{background:rgba(220,90,90,.12);color:#ff9c9c;border:1px solid rgba(220,90,90,.28)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🎄 圣诞树 · 管理后台</h1>
+  <div class="sub">Grand Luxury Tree v17.6 · 改完点「保存并发布」即刻生效</div>
+
+  <div class="card">
+    <h2><i></i>访问数据</h2>
+    <div class="stat">
+      <div><b id="uv">--</b><span>访客（按 IP）</span></div>
+      <div><b id="pv">--</b><span>总访问量</span></div>
+    </div>
+    <div class="tip" style="margin-top:9px">数据来自不蒜子，同一 WiFi 多设备算 1 人，隔天再访问会再算一次。</div>
+  </div>
+
+  <div class="card">
+    <h2><i></i>页面文案</h2>
+    <div class="row"><label>第一行</label><input type="text" id="t_line1" placeholder="Merry"></div>
+    <div class="row"><label>第二行</label><input type="text" id="t_line2" placeholder="Christmas"></div>
+    <div class="row"><label>字体</label>
+      <select id="t_font">
+        <option value="style1">书法韵味</option><option value="style2">古典衬线</option>
+        <option value="style3">优雅手写</option><option value="style4">艺术线条</option>
+        <option value="style5">复古重磅</option>
+      </select></div>
+    <div class="row"><label>字号</label><input type="range" id="t_size" min="50" max="250" step="5"><span class="val" id="v_size"></span></div>
+    <div class="row"><label>文字颜色</label><input type="color" id="t_color"></div>
+  </div>
+
+  <div class="card">
+    <h2><i></i>配色</h2>
+    <div class="row"><label>背景</label><input type="color" id="c_bg"><span class="val muted" id="v_cbg"></span></div>
+    <div class="row"><label>香槟金</label><input type="color" id="c_gold"><span class="val muted" id="v_cgold"></span></div>
+    <div class="row"><label>墨绿</label><input type="color" id="c_green"><span class="val muted" id="v_cgreen"></span></div>
+    <div class="row"><label>点缀红</label><input type="color" id="c_red"><span class="val muted" id="v_cred"></span></div>
+  </div>
+
+  <div class="card">
+    <h2><i></i>树与星尘</h2>
+    <div class="row"><label>树粒子</label><input type="range" id="tr_count" min="400" max="4000" step="100"><span class="val" id="v_trcount"></span></div>
+    <div class="row"><label>星尘</label><input type="range" id="tr_dust" min="500" max="6000" step="100"><span class="val" id="v_trdust"></span></div>
+    <div class="row"><label>树高</label><input type="range" id="tr_height" min="15" max="32" step="0.5"><span class="val" id="v_trh"></span></div>
+    <div class="row"><label>树宽</label><input type="range" id="tr_radius" min="5" max="13" step="0.5"><span class="val" id="v_trr"></span></div>
+    <div class="tip">手机上粒子会自动减半，别调太满，老手机会卡。</div>
+  </div>
+
+  <div class="card">
+    <h2><i></i>雪与光</h2>
+    <div class="row"><label>雪花数量</label><input type="range" id="s_count" min="0" max="3000" step="100"><span class="val" id="v_scount"></span></div>
+    <div class="row"><label>雪花大小</label><input type="range" id="s_size" min="0.05" max="0.3" step="0.01"><span class="val" id="v_ssize"></span></div>
+    <div class="row"><label>下落速度</label><input type="range" id="s_speed" min="1" max="8" step="0.5"><span class="val" id="v_sspeed"></span></div>
+    <div class="row"><label>泛光强度</label><input type="range" id="b_bloom" min="0" max="1.5" step="0.05"><span class="val" id="v_bloom"></span></div>
+  </div>
+
+  <div class="card">
+    <h2><i></i>发布</h2>
+    <div class="btns">
+      <button onclick="preview()">预览效果</button>
+      <button onclick="reload()">重新读取线上</button>
+      <button onclick="window.open('../','_blank')">打开圣诞树</button>
+    </div>
+    <details>
+      <summary>发布凭据（GitHub Token）<span id="tokBadge" class="badge no">未设置</span></summary>
+      <div class="tip" style="margin-top:9px">只需填一次，存在你本机浏览器里。获取方式：GitHub → Settings → Developer settings → Fine-grained tokens → 新建，只勾选 <b>xmas-tree-2</b> 这个仓库的 <b>Contents: Read and write</b>。<br>
+      生成后是一串 <span class="muted">github_pat_...</span>
+      <br><a href="https://github.com/settings/personal-access-tokens/new" target="_blank">→ 去创建 Token</a></div>
+      <div class="row"><input type="password" id="tok" placeholder="github_pat_..."></div>
+    </details>
+  </div>
+</div>
+
+<div class="bar"><div class="inner">
+  <button class="primary" id="saveBtn" onclick="save()">保存并发布</button>
+  <button style="flex:0 0 96px" onclick="resetDefault()">恢复默认</button>
+</div></div>
+<div id="toast"></div>
+
+<script>
+const OWNER='2785052331-alt', REPO='xmas-tree-2', PATH='config.json', BRANCH='main';
+const API='https://api.github.com/repos/'+OWNER+'/'+REPO+'/contents/'+PATH;
+const DRAFT='xmas_cfg_draft', TOK='xmas_gh_pat';
+const $=id=>document.getElementById(id);
+
+const DEFAULTS={text:{line1:'Merry',line2:'Christmas',fontKey:'style1',size:100,color:'#fceea7'},
+  colors:{bg:'#000000',gold:'#ffd966',green:'#03180a',red:'#990000'},
+  tree:{count:1500,dust:2500,height:24,radius:8},
+  snow:{count:1500,sizeBase:0.12,speed:3.5},bloom:0.55};
+
+function toast(msg,err){const t=$('toast');t.textContent=msg;t.className='on'+(err?' err':'');clearTimeout(t._t);t._t=setTimeout(()=>t.className='',2600);}
+
+function fill(c){
+  c=c||DEFAULTS;
+  $('t_line1').value=c.text.line1||''; $('t_line2').value=c.text.line2||'';
+  $('t_font').value=c.text.fontKey||'style1'; $('t_size').value=c.text.size||100; $('t_color').value=c.text.color||'#fceea7';
+  $('c_bg').value=c.colors.bg||'#000000'; $('c_gold').value=c.colors.gold||'#ffd966';
+  $('c_green').value=c.colors.green||'#03180a'; $('c_red').value=c.colors.red||'#990000';
+  $('tr_count').value=c.tree.count||1500; $('tr_dust').value=c.tree.dust||2500;
+  $('tr_height').value=c.tree.height||24; $('tr_radius').value=c.tree.radius||8;
+  $('s_count').value=c.snow.count!=null?c.snow.count:1500; $('s_size').value=c.snow.sizeBase||0.12;
+  $('s_speed').value=c.snow.speed||3.5; $('b_bloom').value=c.bloom!=null?c.bloom:0.55;
+  syncLabels();
+}
+function syncLabels(){
+  $('v_size').textContent=$('t_size').value+'%';
+  $('v_cbg').textContent=$('c_bg').value; $('v_cgold').textContent=$('c_gold').value;
+  $('v_cgreen').textContent=$('c_green').value; $('v_cred').textContent=$('c_red').value;
+  $('v_trcount').textContent=$('tr_count').value; $('v_trdust').textContent=$('tr_dust').value;
+  $('v_trh').textContent=parseFloat($('tr_height').value).toFixed(1); $('v_trr').textContent=parseFloat($('tr_radius').value).toFixed(1);
+  $('v_scount').textContent=$('s_count').value; $('v_ssize').textContent=parseFloat($('s_size').value).toFixed(2);
+  $('v_sspeed').textContent=parseFloat($('s_speed').value).toFixed(1); $('v_bloom').textContent=parseFloat($('b_bloom').value).toFixed(2);
+}
+document.querySelectorAll('input,select').forEach(el=>el.addEventListener('input',syncLabels));
+
+function collect(){
+  return {text:{line1:$('t_line1').value.trim()||'Merry',line2:$('t_line2').value.trim()||'Christmas',
+      fontKey:$('t_font').value,size:+$('t_size').value,color:$('t_color').value},
+    colors:{bg:$('c_bg').value,gold:$('c_gold').value,green:$('c_green').value,red:$('c_red').value},
+    tree:{count:+$('tr_count').value,dust:+$('tr_dust').value,height:+$('tr_height').value,radius:+$('tr_radius').value},
+    snow:{count:+$('s_count').value,sizeBase:+$('s_size').value,speed:+$('s_speed').value},
+    bloom:+$('b_bloom').value, updatedAt:new Date().toISOString()};
+}
+
+function b64(str){const bytes=new TextEncoder().encode(str);let s='';for(let i=0;i<bytes.length;i++)s+=String.fromCharCode(bytes[i]);return btoa(s);}
+
+async function api(method,body,token){
+  const h={'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'};
+  if(token) h['Authorization']='Bearer '+token;
+  if(body) h['Content-Type']='application/json';
+  const r=await fetch(API+(method==='GET'?('?t='+Date.now()):''),{method,headers:h,body:body?JSON.stringify(body):undefined});
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(j.message||('HTTP '+r.status));
+  return j;
+}
+
+async function loadRemote(){
+  try{ const r=await fetch('../config.json?t='+Date.now(),{cache:'no-store'}); if(!r.ok) throw 0; return await r.json(); }
+  catch(e){ return null; }
+}
+
+async function reload(){
+  const c=await loadRemote();
+  if(!c){ toast('读取失败，用默认值显示',true); fill(DEFAULTS); return; }
+  fill(c); toast('已读取线上配置');
+}
+
+function preview(){
+  localStorage.setItem(DRAFT,JSON.stringify(collect()));
+  window.open('../?preview=1','_blank');
+  toast('已在新窗口预览（只是草稿，没发布）');
+}
+
+async function save(){
+  const token=($('tok').value||localStorage.getItem(TOK)||'').trim();
+  if(!token){ toast('先填 GitHub Token（在「发布」里展开）',true); document.querySelector('details').open=true; return; }
+  localStorage.setItem(TOK,token); markTok();
+  const btn=$('saveBtn'); btn.disabled=true; btn.textContent='发布中…';
+  try{
+    let sha=null;
+    try{ const cur=await api('GET',null,token); sha=cur.sha; }catch(e){ if(!/Not Found/i.test(e.message)) throw e; }
+    const cfg=collect();
+    const body={message:'后台更新圣诞树配置 '+new Date().toLocaleString('zh-CN'),content:b64(JSON.stringify(cfg,null,2)),branch:BRANCH};
+    if(sha) body.sha=sha;
+    await api('PUT',body,token);
+    toast('已发布 ✓ 等 30~60 秒刷新页面生效');
+  }catch(e){ toast('失败：'+e.message,true); }
+  finally{ btn.disabled=false; btn.textContent='保存并发布'; }
+}
+
+function resetDefault(){ fill(DEFAULTS); toast('已恢复默认值，记得点发布'); }
+
+function markTok(){
+  const has=!!localStorage.getItem(TOK);
+  const b=$('tokBadge'); b.className='badge '+(has?'ok':'no'); b.textContent=has?'已保存':'未设置';
+  if(has) $('tok').placeholder='已保存（重新填可更换）';
+}
+
+/* 访客数：不蒜子 JSONP */
+function bz(){
+  return new Promise((res,rej)=>{
+    const name='__bz'+Date.now()+Math.floor(Math.random()*999);
+    window[name]=d=>{res(d);delete window[name];};
+    const s=document.createElement('script');
+    s.src='https://busuanzi.ibruce.info/busuanzi?jsonpCallback='+name;
+    s.onerror=()=>rej(new Error('x'));
+    document.body.appendChild(s);
+    setTimeout(()=>rej(new Error('t')),9000);
+  });
+}
+bz().then(d=>{ $('uv').textContent=d.site_uv; $('pv').textContent=d.site_pv; })
+    .catch(()=>{ $('uv').textContent='—'; $('pv').textContent='—'; });
+
+(async()=>{
+  const t=localStorage.getItem(TOK); if(t) $('tok').value=t;
+  markTok();
+  fill(await loadRemote());
+})();
+</script>
+</body>
+</html>

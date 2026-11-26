@@ -380,7 +380,7 @@ window.addEventListener('keydown', (e) => {
         function initThree() { const c=document.getElementById('canvas-container'); scene=new THREE.Scene(); scene.background=new THREE.Color(CONFIG.colors.bg); scene.fog=new THREE.FogExp2(CONFIG.colors.bg,0.01); const _ar=window.innerWidth/window.innerHeight; const _z = _ar<0.8 ? 57 : (_ar>1.9 ? 46 : 50); camera=new THREE.PerspectiveCamera(42,_ar,0.1,1000); camera.position.set(0,_ar<0.8?1.2:2,_z); renderer=new THREE.WebGLRenderer({antialias:!IS_MOBILE,alpha:false,powerPreference:"high-performance"}); renderer.setSize(window.innerWidth,window.innerHeight); renderer.setPixelRatio(Math.min(window.devicePixelRatio,IS_MOBILE?1.6:2)); renderer.toneMapping=THREE.ReinhardToneMapping; renderer.toneMappingExposure=2.2; c.appendChild(renderer.domElement); mainGroup=new THREE.Group(); scene.add(mainGroup); }
         function setupEnvironment() { const p=new THREE.PMREMGenerator(renderer); scene.environment=p.fromScene(new RoomEnvironment(),0.04).texture; }
         function setupLights() { scene.add(new THREE.AmbientLight(0xffffff,0.6)); const i=new THREE.PointLight(0xffaa00,2,20); i.position.set(0,5,0); mainGroup.add(i); const s1=new THREE.SpotLight(0xffcc66,1200); s1.position.set(30,40,40); s1.angle=0.5; s1.penumbra=0.5; scene.add(s1); const s2=new THREE.SpotLight(0x6688ff,600); s2.position.set(-30,20,-30); scene.add(s2); const f=new THREE.DirectionalLight(0xffeebb,0.8); f.position.set(0,0,50); scene.add(f); }
-        function setupPostProcessing() { const r=new RenderPass(scene,camera); const b=new UnrealBloomPass(new THREE.Vector2(window.innerWidth,window.innerHeight),1.5,0.4,0.85); b.threshold=0.86; b.strength=IS_MOBILE?0.42:0.55; b.radius=IS_MOBILE?0.32:0.4; composer=new EffectComposer(renderer); composer.addPass(r); composer.addPass(b); }
+        function setupPostProcessing() { const r=new RenderPass(scene,camera); const b=new UnrealBloomPass(new THREE.Vector2(window.innerWidth,window.innerHeight),1.5,0.4,0.85); b.threshold=0.86; b.strength=(window.__bloomOverride!=null?window.__bloomOverride:(IS_MOBILE?0.42:0.55)); b.radius=IS_MOBILE?0.32:0.4; composer=new EffectComposer(renderer); composer.addPass(r); composer.addPass(b); }
         function createTextures() { const c=document.createElement('canvas'); c.width=128; c.height=128; const x=c.getContext('2d'); x.fillStyle='#ffffff'; x.fillRect(0,0,128,128); x.fillStyle='#880000'; x.beginPath(); for(let i=-128;i<256;i+=32){x.moveTo(i,0);x.lineTo(i+32,128);x.lineTo(i+16,128);x.lineTo(i-16,0);} x.fill(); caneTexture=new THREE.CanvasTexture(c); caneTexture.wrapS=caneTexture.wrapT=THREE.RepeatWrapping; caneTexture.repeat.set(3,3); }
 
         window.updateSnowSettings=()=> { CONFIG.snow.sizeBase=parseFloat(document.getElementById('slider-snow-size').value); CONFIG.snow.count=parseInt(document.getElementById('slider-snow-count').value); createSnow(); };
@@ -704,7 +704,54 @@ if(manualRotateState.x!==0||manualRotateState.y!==0){const s=CONFIG.interaction.
             document.addEventListener('pointerdown', unlock);
         })();
 
-        init();
+        /* ===== 远程配置：由管理后台写入 ./config.json ===== */
+            function __hexToInt(v){ if(typeof v==='number') return v; if(!v) return null;
+                const t=String(v).trim().replace(/^#/,'').replace(/^0x/i,''); const n=parseInt(t,16); return isNaN(n)?null:n; }
+            function __applyRemoteConfig(cfg){
+                if(!cfg) return;
+                try{
+                    if(cfg.colors){ const m={bg:'bg',gold:'champagneGold',green:'deepGreen',red:'accentRed'};
+                        Object.keys(m).forEach(k=>{ const n=__hexToInt(cfg.colors[k]); if(n!=null) CONFIG.colors[m[k]]=n; }); }
+                    if(cfg.tree){
+                        const f = IS_MOBILE ? 0.5 : 1;
+                        if(cfg.tree.count!=null) CONFIG.particles.count=Math.round(+cfg.tree.count*f);
+                        if(cfg.tree.dust!=null) CONFIG.particles.dustCount=Math.round(+cfg.tree.dust*f);
+                        if(cfg.tree.height!=null) CONFIG.particles.treeHeight=+cfg.tree.height;
+                        if(cfg.tree.radius!=null) CONFIG.particles.treeRadius=+cfg.tree.radius;
+                    }
+                    if(cfg.snow){ const f = IS_MOBILE ? 0.4 : 1;
+                        if(cfg.snow.count!=null) CONFIG.snow.count=Math.round(+cfg.snow.count*f);
+                        if(cfg.snow.sizeBase!=null) CONFIG.snow.sizeBase=+cfg.snow.sizeBase;
+                        if(cfg.snow.speed!=null) CONFIG.snow.speed=+cfg.snow.speed; }
+                    if(cfg.bloom!=null) window.__bloomOverride=+cfg.bloom;
+                }catch(e){ console.warn('remote cfg', e); }
+            }
+            function __applyRemoteText(cfg){
+                if(!cfg || !cfg.text) return; const t=cfg.text;
+                try{
+                    const l1=document.getElementById('input-line1'), l2=document.getElementById('input-line2'),
+                          fs=document.getElementById('font-select'), sz=document.getElementById('slider-fontsize'), cp=document.getElementById('color-picker');
+                    if(l1) l1.value=t.line1||''; if(l2) l2.value=t.line2||'';
+                    if(fs) fs.value=t.fontKey||'style1'; if(sz) sz.value=t.size||100; if(cp) cp.value=t.color||'#fceea7';
+                    applyTextConfig(t.fontKey||'style1', t.line1||'Merry', t.line2||'Christmas', t.size||100, t.color||'#fceea7');
+                }catch(e){ console.warn('remote text', e); }
+            }
+            (async () => {
+                let cfg = null;
+                try{
+                    if(/[?&]preview=1/.test(location.search)){
+                        cfg = JSON.parse(localStorage.getItem('xmas_cfg_draft') || 'null');
+                    } else {
+                        const u = new URL('config.json', location.href); u.searchParams.set('t', Date.now());
+                        const r = await fetch(u, {cache:'no-store'});
+                        if(r.ok) cfg = await r.json();
+                    }
+                }catch(e){ console.warn('load cfg failed', e); }
+                window.__remoteCfg = cfg;
+                __applyRemoteConfig(cfg);
+                init();
+                setTimeout(()=>__applyRemoteText(cfg), 700);
+            })();
     </script><div id="xling-visit">已有 <b id="busuanzi_value_site_uv">--</b> 位朋友来过</div>
 <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
 </body></html>

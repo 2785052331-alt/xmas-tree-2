@@ -1,0 +1,29 @@
+{
+  "text": {
+    "line1": "Merry",
+    "line2": "Christmas",
+    "fontKey": "style1",
+    "size": 100,
+    "color": "#fceea7"
+  },
+  "colors": {
+    "bg": "#000000",
+    "gold": "#ffd966",
+    "green": "#03180a",
+    "red": "#990000"
+  },
+  "tree": {
+    "count": 1500,
+    "dust": 2500,
+    "height": 24,
+    "radius": 8
+  },
+  "snow": {
+    "count": 1500,
+    "sizeBase": 0.12,
+    "speed": 3.5
+  },
+  "bloom": 0.55,
+  "updatedAt": "2026-11-26T00:00:00.000Z",
+  "updatedBy": "default"
+}
