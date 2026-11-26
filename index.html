@@ -739,6 +739,11 @@ if(manualRotateState.x!==0||manualRotateState.y!==0){const s=CONFIG.interaction.
             (async () => {
                 let cfg = null;
                 try{
+                    const m = location.search.match(/[?&]cfg=([^&]+)/);
+                    if(m){ const b=atob(m[1].replace(/-/g,'+').replace(/_/g,'/'));
+                        cfg = JSON.parse(new TextDecoder().decode(Uint8Array.from(b, c=>c.charCodeAt(0)))); }
+                }catch(e){ console.warn('inline cfg', e); }
+                if(!cfg) try{
                     if(/[?&]preview=1/.test(location.search)){
                         cfg = JSON.parse(localStorage.getItem('xmas_cfg_draft') || 'null');
                     } else {
