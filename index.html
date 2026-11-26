@@ -254,7 +254,10 @@ const DB_NAME = "GrandTreeDB_v17_Clean";
                 if(ms){ bgmAudio.src=URL.createObjectURL(ms); if(EXPORTED_DATA) { document.body.addEventListener('click', () => { if(!isMusicPlaying) toggleMusicPlay(); }, { once: true }); } updatePlayBtnUI(false); } 
             } catch(e){console.warn(e);}
             
-            initMediaPipe(); 
+            /* 手势延后初始化，见下方 lazy 绑定 */
+            /* 懒加载：点「镜头」再开摄像头 + 载入手势模型 */
+            (function(){ let started=false; const go=()=>{ if(started) return; started=true; try{ initMediaPipe(); }catch(e){ console.warn(e); } };
+                ['mb-cam','toggle-cam-btn','cam-retry'].forEach(id=>{ const b=document.getElementById(id); if(b) b.addEventListener('click', go, {capture:true}); }); })(); 
             initDraggableTitle();
             
             setMode('TREE');
